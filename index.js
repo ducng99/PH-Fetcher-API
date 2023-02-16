@@ -38,10 +38,15 @@ app.get('/dl/:id(ph[0-9a-f]+)/:qual(\\d+)', async (req, res) => {
 	if (links && links.hasOwnProperty(req.params.qual)) {
 		const downloadUrl = new URL(links[req.params.qual]);
 		console.log("Downloading: " + downloadUrl);
-		
+
 		res.set('Content-Disposition', 'attachment; filename="' + downloadUrl.pathname.split('/').pop() + '"');
 
 		https.get(downloadUrl, stream => {
+			res.set({
+				'Content-Type': stream.headers['content-type'],
+				'Content-Length': stream.headers['content-length']
+			});
+
 			stream.pipe(res);
 		}).on('error', err => {
 			res.status(500).send()
