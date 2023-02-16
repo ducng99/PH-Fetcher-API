@@ -51,7 +51,7 @@ export async function getLinks(id) {
 
     if (mediaObjs) {
         mediaObjs.forEach(media => { links[media.quality] = media.videoUrl });
-        linksCache.set(id, links);
+        linksCache.set(id, links, Date.now() + 5400000);
     }
 
     return links;
