@@ -9,50 +9,50 @@ const linksCache = new SimpleMemcache();
  * @returns {Promise<null|{[key: string]: string}>}
  */
 export async function getLinks(id) {
-	if (linksCache.has(id)) {
-		return linksCache.get(id);
-	}
+    if (linksCache.has(id)) {
+        return linksCache.get(id);
+    }
 
-	const page = await browser.newPage();
-	await page.goto(`${process.env.PH_HOST_URL}${id}`);
+    const page = await browser.newPage();
+    await page.goto(`${process.env.PH_HOST_URL}${id}`);
 
-	let mediaURL = await page.evaluate(() => {
-		if (typeof media_5 !== "undefined") {
-			return media_5;
-		}
-		else if (typeof media_4 !== "undefined") {
-			return media_4;
-		}
-		else if (typeof media_3 !== "undefined") {
-			return media_3;
-		}
+    let mediaURL = await page.evaluate(() => {
+        if (typeof media_5 !== "undefined") {
+            return media_5;
+        }
+        else if (typeof media_4 !== "undefined") {
+            return media_4;
+        }
+        else if (typeof media_3 !== "undefined") {
+            return media_3;
+        }
 
-		return null;
-	});
+        return null;
+    });
 
-	let mediaObjs = null;
+    let mediaObjs = null;
 
-	if (mediaURL) {
-		await page.goto(mediaURL);
+    if (mediaURL) {
+        await page.goto(mediaURL);
 
-		mediaObjs = await page.evaluate(() => {
-			try {
-				return JSON.parse(document.querySelector("body").innerText);
-			}
-			catch {
-				return null;
-			}
-		});
-	}
+        mediaObjs = await page.evaluate(() => {
+            try {
+                return JSON.parse(document.querySelector("body").innerText);
+            }
+            catch {
+                return null;
+            }
+        });
+    }
 
-	page.close();
+    page.close();
 
-	let links = {};
+    let links = {};
 
-	if (mediaObjs) {
-		mediaObjs.forEach(media => { links[media.quality] = media.videoUrl });
-		linksCache.set(id, links);
-	}
+    if (mediaObjs) {
+        mediaObjs.forEach(media => { links[media.quality] = media.videoUrl });
+        linksCache.set(id, links);
+    }
 
-	return links;
+    return links;
 }
