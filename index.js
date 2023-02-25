@@ -1,18 +1,13 @@
 import express from 'express';
 import https from 'https';
 import cors from 'cors';
-import fs from 'fs';
 import dotenv from 'dotenv';
 import { getLinks } from './helper.js';
+import { basename } from 'path';
 
 dotenv.config();
 
 const app = express()
-
-const httpsOptions = {
-    key: fs.readFileSync(process.env.HTTPS_PRIVATE_KEY_PATH),
-    cert: fs.readFileSync(process.env.HTTPS_CERTIFICATE_PATH),
-};
 
 var corsOptions = {
     origin: process.env.WEB_ORIGIN,
@@ -20,6 +15,10 @@ var corsOptions = {
 }
 
 app.use(cors(corsOptions));
+
+app.get('/', async (req, res) => {
+    res.send("I'm running!");
+});
 
 app.get('/info/:id(ph[0-9a-f]+)', async (req, res) => {
     const links = await getLinks(req.params.id);
@@ -37,9 +36,10 @@ app.get('/dl/:id(ph[0-9a-f]+)/:qual(\\d+)', async (req, res) => {
 
     if (links && links.hasOwnProperty(req.params.qual)) {
         const downloadUrl = new URL(links[req.params.qual]);
+        const fileName = basename(downloadUrl.pathname);
         console.log("Downloading: " + downloadUrl);
 
-        res.set('Content-Disposition', 'attachment; filename="' + downloadUrl.pathname.split('/').pop() + '"');
+        res.set('Content-Disposition', 'attachment; filename="' + fileName + '"');
 
         https.get(downloadUrl, stream => {
             res.set({
@@ -57,12 +57,6 @@ app.get('/dl/:id(ph[0-9a-f]+)/:qual(\\d+)', async (req, res) => {
     }
 });
 
-const server = https.createServer(httpsOptions, app);
-
-server.listen(4443, () => {
-    console.log("Server listening on port 4443")
+app.listen(4443, () => {
+	console.log("Server listening on port 4443")
 });
-
-// app.listen(4443, () => {
-// 	console.log("Server listening on port 4443")
-// });

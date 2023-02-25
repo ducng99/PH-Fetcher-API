@@ -3,14 +3,15 @@ import SimpleMemcache from "./SimpleMemcache.js";
 
 const browser = await puppet.launch({ headless: true });
 const linksCache = new SimpleMemcache();
+await linksCache.init();
 
 /**
  * @param {string} id file ID
  * @returns {Promise<null|{[key: string]: string}>}
  */
 export async function getLinks(id) {
-    if (linksCache.has(id)) {
-        return linksCache.get(id);
+    if (await linksCache.has(id)) {
+        return await linksCache.get(id);
     }
 
     const page = await browser.newPage();
@@ -51,7 +52,7 @@ export async function getLinks(id) {
 
     if (mediaObjs) {
         mediaObjs.forEach(media => { links[media.quality] = media.videoUrl });
-        linksCache.set(id, links, Date.now() + 5400000);
+        await linksCache.set(id, links, Date.now() + 5400000);
     }
 
     return links;

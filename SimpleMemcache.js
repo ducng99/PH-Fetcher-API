@@ -1,22 +1,39 @@
+import { createClient } from 'redis';
+
 export default class SimpleMemcache {
     constructor() {
-        this.cache = {};
+        this.client = createClient();
     }
 
-    has(key) {
-        if (this.cache[key].expire < Date.now()) {
-            delete this.cache[key];
+    async init() {
+        await this.client.connect();
+    }
+
+    async has(key) {
+        if (await this.client.exists(key)) {
+            const object = JSON.parse(await this.client.get(key));
+
+            if (object.expire < Date.now()) {
+                await this.client.del(key);
+                return false;
+            }
+            
+            return true;
         }
 
-        return this.cache.hasOwnProperty(key);
+        return false;
     }
 
-    get(key) {
-        return this.cache[key].value;
+    async get(key) {
+        if (await this.client.exists(key)) {
+            const object = JSON.parse(await this.client.get(key));
+            return object.value;
+        }
+
+        return null;
     }
 
-    set(key, value, expire = 0) {
-        this.cache[key].value = value;
-        this.cache[key].expire = expire;
+    async set(key, value, expire = 0) {
+        this.client.set(key, JSON.stringify({ value, expire }));
     }
 }
